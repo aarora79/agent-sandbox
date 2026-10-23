@@ -1,0 +1,12 @@
+# Claims a ready sandbox from secured-pool. The claim's name becomes the backing
+# sandbox + pod name; it reports the adopted sandbox at .status.sandbox.name.
+# The claimed pod inherits ALL of secured-template's hardening plus the two
+# template-provided defaults (no SA token, managed deny-by-default NetworkPolicy).
+apiVersion: extensions.agents.x-k8s.io/v1beta1
+kind: SandboxClaim
+metadata:
+  name: secured-claim
+  namespace: agent-sandbox-demo
+spec:
+  warmPoolRef:
+    name: secured-pool

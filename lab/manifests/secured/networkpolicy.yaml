@@ -1,0 +1,35 @@
+# Default-deny network posture for the SECURED sandbox.
+#
+# Requires a NetworkPolicy-enforcing CNI (this lab installs Calico; kindnet
+# would silently ignore these rules). The policy:
+#   * denies ALL ingress to the secured pod
+#   * denies ALL egress EXCEPT DNS (so name resolution still works)
+#
+# Net effect: even if the agent somehow obtained a credential, it cannot reach
+# the Kubernetes API server (10.96.0.1:443), the kubelet, the cloud metadata
+# endpoint (169.254.169.254), or any other pod. This mirrors the "Managed
+# NetworkPolicy" the agent-sandbox SandboxTemplate controller applies by default.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: secured-agent-deny-all
+  namespace: agent-sandbox-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: secured-agent
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: [] # deny all ingress
+  egress:
+    # Allow DNS only (UDP/TCP 53 to kube-dns in kube-system).
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

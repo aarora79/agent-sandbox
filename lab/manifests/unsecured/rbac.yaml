@@ -1,0 +1,25 @@
+# Over-privileged identity for the UNSECURED demo (used by both ../pod.yaml and
+# sandbox/sandbox.yaml).
+#
+# The "move fast" mistake: the pod gets a ServiceAccount whose token is
+# auto-mounted (the default!) AND that token is bound to cluster-admin. Combined,
+# any code in the pod becomes cluster-admin for the whole cluster.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: risky-agent
+  namespace: agent-sandbox-demo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: risky-agent-cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: risky-agent
+    namespace: agent-sandbox-demo
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin # the whole point: wildly excessive for an agent
+  apiGroup: rbac.authorization.k8s.io

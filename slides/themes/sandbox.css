@@ -1,0 +1,31 @@
+/* @theme sandbox
+ *
+ * gaia, tightened so content-dense slides (tables, code blocks, multi-bullet
+ * lists) don't overflow the 1280x720 slide. gaia's defaults (35px font, 70px
+ * padding) leave only ~580px of usable height; this lowers the base font and
+ * padding to give every slide more headroom. Authoring new slides against this
+ * theme means they fit by default — no per-slide tweaks needed in most cases.
+ *
+ * Registered for marp-cli via `--theme-set themes/sandbox.css` (see package.json)
+ * and for the VS Code Marp preview via .vscode/settings.json (markdown.marp.themes).
+ */
+@import 'gaia';
+
+section {
+  font-size: 30px;
+  padding: 44px 64px;
+}
+
+section h1 { font-size: 1.7em; }
+section h2 { font-size: 1.3em; }
+
+section table { font-size: 0.82em; }
+section pre,
+section code { font-size: 0.8em; }
+section blockquote { font-size: 0.9em; }
+
+/* tighten vertical rhythm so bullet-heavy slides fit */
+section ul,
+section ol { margin-top: 0.2em; margin-bottom: 0.2em; }
+section li { margin: 0.15em 0; }
+section p { margin: 0.4em 0; }

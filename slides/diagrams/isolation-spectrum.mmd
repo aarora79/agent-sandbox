@@ -1,0 +1,5 @@
+flowchart LR
+  T0["Tier 0<br/>runc ns+cgroups<br/>~ms · weakest"] -->
+  T05["Tier 0.5<br/>K8s hardening<br/>~ms · better"] -->
+  T1["Tier 1<br/>gVisor runsc<br/>~0.5s · strong"] -->
+  T2["Tier 2<br/>Kata/Firecracker<br/>~seconds · strongest"]

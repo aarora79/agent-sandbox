@@ -1,0 +1,34 @@
+# kind config that registers gVisor's runsc runtime with containerd.
+#
+# Same as ../../kind-config.yaml (Calico CNI) PLUS:
+#   * a containerd config patch teaching containerd about the "runsc" runtime
+#   * extraMounts binding the host's runsc + sidecar binaries into the kind node
+#
+# "host" here = the machine running the container runtime (the kind NODE's host).
+# On Linux that's your laptop. On macOS the runtime runs inside the podman VM,
+# so runsc must be installed INSIDE that VM — do it with:
+#     ./scripts/install-runsc.sh
+# gVisor's systrap platform needs NO KVM, which is why gVisor (unlike Kata /
+# Firecracker) actually runs on an Apple-silicon Mac.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: agent-sandbox-demo
+networking:
+  disableDefaultCNI: true
+  podSubnet: "192.168.0.0/16"
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]
+      runtime_type = "io.containerd.runsc.v1"
+nodes:
+  - role: control-plane
+    extraMounts:
+      - hostPath: /usr/local/bin/runsc
+        containerPath: /usr/local/bin/runsc
+      - hostPath: /usr/local/bin/containerd-shim-runsc-v1
+        containerPath: /usr/local/bin/containerd-shim-runsc-v1
+      # runsc locates its helper binaries (gvisor_sentry, etc.) in a gvisor-bin/
+      # directory next to itself — it MUST be mounted too, or runsc fails with
+      # "sidecar gvisor_sentry not usable".
+      - hostPath: /usr/local/bin/gvisor-bin
+        containerPath: /usr/local/bin/gvisor-bin

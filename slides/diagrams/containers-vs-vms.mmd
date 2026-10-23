@@ -1,0 +1,11 @@
+flowchart TB
+  subgraph Containers
+    A1[App A] --> K[Shared Host Kernel]
+    A2[App B] --> K
+    A3[App C] --> K
+  end
+  subgraph VMs
+    V1[Guest Kernel A] --> H[Hypervisor]
+    V2[Guest Kernel B] --> H
+    H --> HK[Host Kernel]
+  end

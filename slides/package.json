@@ -1,0 +1,15 @@
+{
+  "name": "sandboxing-agentic-ai-slides",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Marp lecture deck: Sandboxing Agentic AI",
+  "scripts": {
+    "build:html": "npx -y @marp-team/marp-cli@^4 slides.md --theme-set themes/sandbox.css --html --allow-local-files -o slides.html",
+    "build:pdf": "npx -y @marp-team/marp-cli@^4 slides.md --theme-set themes/sandbox.css --html --allow-local-files -o slides.pdf",
+    "preview": "npx -y @marp-team/marp-cli@^4 --theme-set themes/sandbox.css -s .",
+    "build:diagrams": "for f in diagrams/*.mmd; do npx -y @mermaid-js/mermaid-cli@^11 -i \"$f\" -o \"assets/$(basename \"$f\" .mmd).svg\" -t neutral -b transparent; done"
+  },
+  "dependencies": {
+    "@marp-team/marp-cli": "^4"
+  }
+}

@@ -1,0 +1,55 @@
+# SECURED Sandbox — the posture we teach.
+#
+# Same CRD and same image as unsecured/sandbox/sandbox.yaml. The workload is identical;
+# only the isolation posture changed. Defenses, each closing one attack path:
+#
+#   * automountServiceAccountToken: false   -> no API credential in the pod
+#   * serviceAccountName: locked-agent      -> and it has zero RBAC anyway
+#   * no hostPID / no hostPath / no privileged -> cannot see host procs or fs
+#   * runAsNonRoot + runAsUser 65532         -> not root inside the container
+#   * allowPrivilegeEscalation: false        -> cannot regain privileges
+#   * capabilities drop ALL                  -> no Linux capabilities
+#   * readOnlyRootFilesystem: true           -> cannot tamper with its own fs
+#   * seccompProfile RuntimeDefault          -> syscall surface filtered
+#   * pod label app=secured-agent            -> selected by the deny-all NetworkPolicy
+#
+# For even stronger (kernel-level) isolation, add `runtimeClassName: gvisor`
+# (see ../gvisor/). That is an optional appendix because gVisor needs a Linux
+# host with runsc installed.
+apiVersion: agents.x-k8s.io/v1beta1
+kind: Sandbox
+metadata:
+  name: secured-agent
+  namespace: agent-sandbox-demo
+spec:
+  podTemplate:
+    metadata:
+      labels:
+        app: secured-agent # matched by secured-agent-deny-all NetworkPolicy
+    spec:
+      serviceAccountName: locked-agent
+      automountServiceAccountToken: false
+      # runtimeClassName: gvisor   # optional: kernel-level isolation (see ../gvisor/)
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: agent
+          image: nicolaka/netshoot:v0.13
+          command: ["sleep", "infinity"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"

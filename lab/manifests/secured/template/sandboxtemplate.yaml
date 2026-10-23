@@ -1,0 +1,57 @@
+# SandboxTemplate — the reusable, "secure by construction" blueprint.
+#
+# This centralizes the ENTIRE security posture into ONE object that every
+# SandboxClaim inherits, instead of copy-pasting it into each Sandbox.
+#
+# TWO controls come FOR FREE from the SandboxTemplate controller — you do NOT
+# write them yourself:
+#   * automountServiceAccountToken defaults to FALSE when omitted  -> so we omit it
+#   * the `networkPolicy:` block is turned into a per-sandbox NetworkPolicy
+#     (default-deny: no ingress rule => deny all ingress; only DNS egress listed
+#      => API server / metadata / other pods are all blocked)
+#
+# Everything else (securityContext, dropped caps, seccomp, resource limits, and
+# the optional gVisor runtime) still has to be AUTHORED — the controller does not
+# synthesize it — but now it lives here once and is reused by every claim.
+apiVersion: extensions.agents.x-k8s.io/v1beta1
+kind: SandboxTemplate
+metadata:
+  name: secured-template
+  namespace: agent-sandbox-demo
+spec:
+  podTemplate:
+    spec:
+      # automountServiceAccountToken intentionally omitted -> template defaults it to false.
+      # runtimeClassName: gvisor   # optional: kernel-level isolation (needs runsc on the node)
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: agent
+          image: nicolaka/netshoot:v0.13
+          command: ["sleep", "infinity"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+  # Managed NetworkPolicy: the presence of this block makes the controller mint a
+  # unique NetworkPolicy for each sandbox created from this template.
+  networkPolicy:
+    egress:
+      - ports:
+          - protocol: UDP
+            port: 53
+          - protocol: TCP
+            port: 53

@@ -1,0 +1,17 @@
+# RuntimeClasses created by `kata-deploy` on a KVM-capable Linux node.
+# Apply these only AFTER kata-deploy has installed the Kata binaries and
+# registered the containerd runtimes (see README.md). kata-deploy usually
+# creates these for you; they are included here for reference / GitOps.
+---
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: kata-qemu # Kata with the QEMU hypervisor (full microVM per pod)
+handler: kata-qemu
+overhead:
+  podFixed:
+    cpu: "250m"
+    memory: "160Mi"
+scheduling:
+  nodeSelector:
+    katacontainers.io/kata-runtime: "true"

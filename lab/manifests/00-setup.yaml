@@ -1,0 +1,26 @@
+# Lab setup: namespaces and the "loot" we are protecting.
+#
+# corp-secrets holds a sensitive credential that lives ELSEWHERE in the cluster.
+# A well-behaved agent sandbox should never be able to read it. The unsecured
+# sandbox will steal it via its over-mounted, over-privileged API token.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agent-sandbox-demo
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: corp-secrets
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prod-db-credentials
+  namespace: corp-secrets
+type: Opaque
+stringData:
+  username: "prod-admin"
+  password: "S3cr3t-pr0d-DB-p@ssw0rd-do-not-leak"
+  dsn: "postgres://prod-admin@prod-db.corp.internal:5432/payments"

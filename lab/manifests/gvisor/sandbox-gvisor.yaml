@@ -1,0 +1,46 @@
+# SECURED Sandbox running under gVisor (kernel-level isolation).
+#
+# Identical to ../secured/sandbox.yaml EXCEPT runtimeClassName: gvisor, which
+# makes the pod run on gVisor's userspace kernel (runsc) instead of sharing the
+# host kernel directly. Requires the "gvisor" RuntimeClass (./runtimeclass.yaml)
+# and runsc installed on the node (../../scripts/install-runsc.sh on macOS).
+#
+# This stacks ON TOP of the Kubernetes-native hardening: even a host-kernel
+# exploit now has to first break out of gVisor's syscall-intercepting sandbox.
+apiVersion: agents.x-k8s.io/v1beta1
+kind: Sandbox
+metadata:
+  name: secured-agent-gvisor
+  namespace: agent-sandbox-demo
+spec:
+  podTemplate:
+    metadata:
+      labels:
+        app: secured-agent # matched by the secured-agent-deny-all NetworkPolicy
+    spec:
+      runtimeClassName: gvisor
+      serviceAccountName: locked-agent
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: agent
+          image: nicolaka/netshoot:v0.13
+          command: ["sleep", "infinity"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

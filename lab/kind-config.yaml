@@ -1,0 +1,12 @@
+# kind cluster for the sandboxing lab.
+# Default CNI is disabled so we can install Calico, which actually ENFORCES
+# NetworkPolicy. kindnet (kind's default CNI) silently ignores NetworkPolicy,
+# which would make the "network isolation" part of the lab a lie.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: agent-sandbox-demo
+networking:
+  disableDefaultCNI: true
+  podSubnet: "192.168.0.0/16" # matches Calico's default IPv4 pool
+nodes:
+  - role: control-plane

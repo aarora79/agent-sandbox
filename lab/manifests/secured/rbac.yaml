@@ -1,0 +1,11 @@
+# Minimal identity for the SECURED sandbox.
+#
+# A dedicated ServiceAccount with NO RoleBindings at all. Even if a token were
+# mounted, it could do nothing. In the secured Sandbox we also refuse to mount
+# the token in the first place (automountServiceAccountToken: false).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: locked-agent
+  namespace: agent-sandbox-demo
+automountServiceAccountToken: false

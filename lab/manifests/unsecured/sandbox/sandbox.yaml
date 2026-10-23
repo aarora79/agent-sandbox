@@ -1,0 +1,38 @@
+# UNSECURED Sandbox (kept for reference / comparison).
+#
+# The lab's insecure demo is now driven by PLAIN Kubernetes resources
+# (../pod.yaml) to make the point that defaults are not safe. This file shows
+# the SAME reckless posture expressed through the agent-sandbox `Sandbox` CRD —
+# proving the CRD is not magically safe either: whatever Pod spec you give it,
+# it faithfully runs. Same sins as ../pod.yaml, plus explicit privileged/root.
+#
+# Needs the shared identity in ../rbac.yaml (ServiceAccount `risky-agent`
+# bound to cluster-admin). To try it:
+#   kubectl apply -f ../rbac.yaml -f sandbox.yaml
+# (requires the agent-sandbox controller from ./scripts/01-up.sh)
+apiVersion: agents.x-k8s.io/v1beta1
+kind: Sandbox
+metadata:
+  name: unsecured-agent
+  namespace: agent-sandbox-demo
+spec:
+  podTemplate:
+    spec:
+      serviceAccountName: risky-agent
+      automountServiceAccountToken: true
+      hostPID: true
+      containers:
+        - name: agent
+          image: nicolaka/netshoot:v0.13
+          command: ["sleep", "infinity"]
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          volumeMounts:
+            - name: host-root
+              mountPath: /host
+      volumes:
+        - name: host-root
+          hostPath:
+            path: /
+            type: Directory

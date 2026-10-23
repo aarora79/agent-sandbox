@@ -1,0 +1,37 @@
+# PLAIN Kubernetes — no Sandbox CRD, no hardening. This is what you get if you
+# just `kubectl apply` a normal Pod + ServiceAccount and don't think about
+# security. The dangerous parts are mostly DEFAULTS you never opted into:
+#
+#   * the ServiceAccount token is auto-mounted (automountServiceAccountToken
+#     defaults to true) — and here that SA is bound to cluster-admin (rbac.yaml)
+#   * the container runs as ROOT (uid 0) — the image's default user; nothing
+#     stops it
+#   * the root filesystem is writable, there is NO seccomp profile, and egress
+#     is wide open (no NetworkPolicy)
+#
+# The ONLY non-defaults are `hostPID` and a hostPath mount of "/", added so this
+# plain Pod can reach the same host surfaces as the sandbox demo (parity). Note
+# we did NOT even need `privileged` or `runAsUser: 0` — Kubernetes hands you a
+# root box with a mounted admin token by default. Security is opt-IN.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: unsecured-agent
+  namespace: agent-sandbox-demo
+  labels:
+    app: unsecured-agent
+spec:
+  serviceAccountName: risky-agent
+  hostPID: true
+  containers:
+    - name: agent
+      image: nicolaka/netshoot:v0.13
+      command: ["sleep", "infinity"]
+      volumeMounts:
+        - name: host-root
+          mountPath: /host
+  volumes:
+    - name: host-root
+      hostPath:
+        path: /
+        type: Directory

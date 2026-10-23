@@ -1,0 +1,26 @@
+flowchart TB
+  subgraph NODE["One Linux node"]
+    direction TB
+    subgraph runc["runc (default)"]
+      direction TB
+      a0["agent code"] -->|"syscalls hit the<br/>host kernel directly"| hk0["HOST kernel"]
+    end
+    subgraph gv["gVisor (runsc)"]
+      direction TB
+      a1["agent code"] -->|"syscalls"| s1["runsc sentry<br/>(userspace kernel)"]
+      s1 -->|"small, filtered<br/>syscall set"| hk1["HOST kernel"]
+    end
+    subgraph kata["Kata / Firecracker"]
+      direction TB
+      a2["agent code"] --> gk2["GUEST kernel<br/>(per pod)"]
+      gk2 --> vmm["VMM: QEMU / Firecracker"]
+      vmm -->|"KVM only"| hk2["HOST kernel"]
+    end
+    subgraph vm["Full VM (for comparison)"]
+      direction TB
+      app3["app + full guest OS"] --> gk3["GUEST kernel"]
+      gk3 --> hv["hypervisor"]
+      hv -->|"KVM only"| hk3["HOST kernel"]
+    end
+  end
+  hk0 -.-> HWnote["← all four sit on the same CPU/hardware"]
